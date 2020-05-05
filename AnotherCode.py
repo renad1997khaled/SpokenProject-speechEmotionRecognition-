@@ -3,10 +3,13 @@ import soundfile
 import os, glob, pickle
 import numpy as np
 from sklearn.model_selection import train_test_split
-from librosa.core import istft
 from sklearn.pipeline import Pipeline
 from sklearn import linear_model, datasets, metrics
 from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.svm import LinearSVC
+
 from matplotlib import pyplot
 from sklearn.base import clone
 import warnings
@@ -15,6 +18,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.externals import joblib
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+
 import tensorflow as tf
 warnings.filterwarnings("ignore")
 #DataFlair - Extract features (mfcc, chroma, mel) from a sound file
@@ -74,6 +80,7 @@ print((x_train.shape[0], x_test.shape[0]))
 #DataFlair - Get the number of features extracted
 print(f'Features extracted: {x_train.shape[1]}')
 #DataFlair - Initialize the Multi Layer Perceptron Classifier
+print("______________________________________________________________________")
 print("\nUsing MLPClassifier")
 model=MLPClassifier(alpha=0.01, batch_size=256, epsilon=1e-05, hidden_layer_sizes=(300,), learning_rate='adaptive', max_iter=500)
 #DataFlair - Train the model
@@ -85,6 +92,7 @@ y_pred=model.predict(x_test)
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 #DataFlair - Print the accuracy
 print("Accuracy: {:.2f}%".format(accuracy*100))
+print("______________________________________________________________________")
 print("\nUsing GaussianNB")
 NB=GaussianNB()
 NB.fit(x_train,y_train)
@@ -92,6 +100,7 @@ y_pred=NB.predict(x_test)
 #DataFlair - Calculate the accuracy of our model
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print("Accuracy: {:.2f}%".format(accuracy*100))
+print("______________________________________________________________________")
 print("\nUsing SVM")
 svm=SVC()
 svm.fit(x_train,y_train)
@@ -99,6 +108,7 @@ y_pred=svm.predict(x_test)
 #DataFlair - Calculate the accuracy of our model
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print("Accuracy: {:.2f}%".format(accuracy*100))
+print("______________________________________________________________________")
 print("\nUsing BernoulliRBM")
 logistic = linear_model.LogisticRegression()
 rbm = BernoulliRBM(random_state=0, verbose=True)
@@ -114,22 +124,27 @@ rbm_features_classifier.fit(x_train, y_train)
 raw_pixel_classifier = clone(logistic)
 raw_pixel_classifier.C = 100.
 raw_pixel_classifier.fit(x_train, y_train)
-# #############################################################################
 # Evaluation
 # accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 # print("Accuracy: {:.2f}%".format(accuracy*100))
 Y_pred = rbm_features_classifier.predict(x_test)
 print("Logistic regression using RBM features:\n%s\n" % (
     metrics.classification_report(y_test, Y_pred)))
+accuracy=accuracy_score(y_true=y_test, y_pred=Y_pred)
+print("Accuracy using RBM features: {:.2f}%".format(accuracy*100))
 
 Y_pred = raw_pixel_classifier.predict(x_test)
-print("Logistic regression using raw pixel features:\n%s\n" % (
+print("\nLogistic regression using raw pixel features:\n%s\n" % (
     metrics.classification_report(y_test, Y_pred)))
 accuracy=accuracy_score(y_true=y_test, y_pred=Y_pred)
+print("Accuracy using raw pixel features: {:.2f}%".format(accuracy*100))
+print("______________________________________________________________________")
+print("\nVotingClassifier(LinearSVC,KNeighborsClassifier,RandomForestClassifier)")
+# combine the predictions of several base estimators
+clf = VotingClassifier([('lsvc', LinearSVC()),('knn',KNeighborsClassifier()),('rfor', RandomForestClassifier())])
+clf.fit(x_train, y_train)
+y_pred=clf.predict(x_test)
+#DataFlair - Calculate the accuracy of our model
+accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print("Accuracy: {:.2f}%".format(accuracy*100))
-
-
-
-
-
-
+print("______________________________________________________________________")
