@@ -1,15 +1,25 @@
 import librosa
 import soundfile
 import os, glob, pickle
+import matplotlib.pyplot as plt
+from keras.utils.vis_utils import plot_model
+from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn import linear_model, datasets, metrics
 from sklearn.neural_network import MLPClassifier
+from sklearn import gaussian_process
+from sklearn import datasets,linear_model
+from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.svm import LinearSVC
 
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MinMaxScaler
+import seaborn as sns
 from matplotlib import pyplot
 from sklearn.base import clone
 import warnings
@@ -85,11 +95,28 @@ print("\nUsing MLPClassifier")
 model=MLPClassifier(alpha=0.01, batch_size=256, epsilon=1e-05, hidden_layer_sizes=(300,), learning_rate='adaptive', max_iter=500)
 #DataFlair - Train the model
 history= model.fit(x_train,y_train)
+# # summarize history for accuracy
+# plt.plot(history.history['accuracy'])
+# plt.plot(history.history['val_accuracy'])
+# plt.title('model accuracy')
+# plt.ylabel('accuracy')
+# plt.xlabel('epoch')
+# plt.legend(['train', 'test'], loc='upper left')
+# plt.show()
+# # summarize history for loss
+# plt.plot(history.history['loss'])
+# plt.plot(history.history['val_loss'])
+# plt.title('model loss')
+# plt.ylabel('loss')
+# plt.xlabel('epoch')
+# plt.legend(['train', 'test'], loc='upper left')
+# plt.show()
 joblib.dump(history, "model.pkl")
 #DataFlair - Predict for the test set
 y_pred=model.predict(x_test)
 #DataFlair - Calculate the accuracy of our model
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
+print(metrics.classification_report(y_test, y_pred))
 #DataFlair - Print the accuracy
 print("Accuracy: {:.2f}%".format(accuracy*100))
 print("______________________________________________________________________")
@@ -98,6 +125,7 @@ NB=GaussianNB()
 NB.fit(x_train,y_train)
 y_pred=NB.predict(x_test)
 #DataFlair - Calculate the accuracy of our model
+print(metrics.classification_report(y_test, y_pred))
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print("Accuracy: {:.2f}%".format(accuracy*100))
 print("______________________________________________________________________")
@@ -145,6 +173,7 @@ clf = VotingClassifier([('lsvc', LinearSVC()),('knn',KNeighborsClassifier()),('r
 clf.fit(x_train, y_train)
 y_pred=clf.predict(x_test)
 #DataFlair - Calculate the accuracy of our model
+print(metrics.classification_report(y_test, y_pred))
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print("Accuracy: {:.2f}%".format(accuracy*100))
 print("______________________________________________________________________")
