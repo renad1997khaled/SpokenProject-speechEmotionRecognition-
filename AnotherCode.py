@@ -14,6 +14,8 @@ from sklearn import datasets,linear_model
 from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.model_selection import learning_curve
+import scikitplot as skplt
 from sklearn.svm import LinearSVC
 
 from sklearn.cluster import KMeans
@@ -95,22 +97,8 @@ print("\nUsing MLPClassifier")
 model=MLPClassifier(alpha=0.01, batch_size=256, epsilon=1e-05, hidden_layer_sizes=(300,), learning_rate='adaptive', max_iter=500)
 #DataFlair - Train the model
 history= model.fit(x_train,y_train)
+
 # # summarize history for accuracy
-# plt.plot(history.history['accuracy'])
-# plt.plot(history.history['val_accuracy'])
-# plt.title('model accuracy')
-# plt.ylabel('accuracy')
-# plt.xlabel('epoch')
-# plt.legend(['train', 'test'], loc='upper left')
-# plt.show()
-# # summarize history for loss
-# plt.plot(history.history['loss'])
-# plt.plot(history.history['val_loss'])
-# plt.title('model loss')
-# plt.ylabel('loss')
-# plt.xlabel('epoch')
-# plt.legend(['train', 'test'], loc='upper left')
-# plt.show()
 joblib.dump(history, "model.pkl")
 #DataFlair - Predict for the test set
 y_pred=model.predict(x_test)
