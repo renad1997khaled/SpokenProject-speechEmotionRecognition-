@@ -2,6 +2,8 @@ import librosa
 import soundfile
 import os, glob, pickle
 import matplotlib.pyplot as plt
+from yellowbrick.regressor import prediction_error
+import statsmodels.api as sm
 from keras.utils.vis_utils import plot_model
 from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
@@ -102,6 +104,18 @@ history= model.fit(x_train,y_train)
 joblib.dump(history, "model.pkl")
 #DataFlair - Predict for the test set
 y_pred=model.predict(x_test)
+
+# predicted =y_pred
+# expected = y_test
+# plt.figure(figsize=(4, 3))
+# plt.scatter(expected, predicted)
+# plt.plot([0, 100], [0, 100], '--k')
+# plt.axis('tight')
+# plt.xlabel('Train')
+# plt.ylabel('Predicted')
+# plt.title('MLPClassifier Prediction')
+# plt.tight_layout()
+# plt.show()
 #DataFlair - Calculate the accuracy of our model
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print(metrics.classification_report(y_test, y_pred))
