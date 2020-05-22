@@ -1,41 +1,23 @@
 import librosa
 import soundfile
-import os, glob, pickle
-import matplotlib.pyplot as plt
-from yellowbrick.regressor import prediction_error
-import statsmodels.api as sm
-from keras.utils.vis_utils import plot_model
-from sklearn.metrics import classification_report, confusion_matrix
+import os, pickle
 import numpy as np
+import time
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn import linear_model, datasets, metrics
+from sklearn import metrics
 from sklearn.neural_network import MLPClassifier
-from sklearn import gaussian_process
 from sklearn import datasets,linear_model
-from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-from sklearn.model_selection import learning_curve
-import scikitplot as skplt
 from sklearn.svm import LinearSVC
-
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import MinMaxScaler
-import seaborn as sns
-from matplotlib import pyplot
 from sklearn.base import clone
 import warnings
 from sklearn.neural_network import BernoulliRBM
 from sklearn.metrics import accuracy_score
-from sklearn.externals import joblib
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
-
-import tensorflow as tf
 warnings.filterwarnings("ignore")
 #DataFlair - Extract features (mfcc, chroma, mel) from a sound file
 def extract_feature(file_name, mfcc, chroma, mel):
@@ -56,23 +38,6 @@ def extract_feature(file_name, mfcc, chroma, mel):
             mel=np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
             result=np.hstack((result, mel))
     return result
-#DataFlair - Emotions in the RAVDESS dataset
-emotions={
-  '01':'neutral',
-  '02':'anger',
-  '03':'bordom',
-  '04':'fear',
-  '05':'happines',
-  '06':'sadness'
-}
-#DataFlair - Emotions to observe
-observed_emotions=['neutral', 'anger', 'bordom', 'fear','happines','sadness']
-#DataFlair - Load the data and extract features for each sound file
-train_audio_path='input/train/'
-labels=os.listdir(train_audio_path)
-
-#Speach to text Model in Python
-
 def load_data(test_size=0.2):
     x,y=[],[]
     for label in labels:
@@ -80,13 +45,65 @@ def load_data(test_size=0.2):
         waves = [f for f in os.listdir(train_audio_path + '/' + label) if f.endswith('.wav')]
         for wav in waves:
             file = train_audio_path + '/' + label + '/' + wav
-            feature = extract_feature(file, mfcc=True, chroma=True, mel=True)
+            feature = extract_feature(file, mfcc=True, chroma=False, mel=False)
             x.append(feature)
             y.append(label)
     return x,y
+def load_data2(test_size=1):
+    x,y=[],[]
+    waves = [f for f in os.listdir(test_audio_path+'/' ) if f.endswith('.wav')]
+    for wav in waves:
+        file =test_audio_path + '/' + wav
+        feature = extract_feature(file, mfcc=True, chroma=False, mel=False)
+        x.append(feature)
+        y.append(wav)
+    return x,y
+def CreateFile(y_pred):
+    timestr = time.strftime("%Y_%m_%d-%H_%M_%S")
+    name=timestr+".txt"
+    file1 = open(name, "a")  # append mode
+    i = 1
+    for m in y_pred:
+        print(i, m)
+        i = i + 1
+        if m=="anger":
+            file1.write("1\n")
+        elif m=="bordom":
+            file1.write("2\n")
+        elif m=="fear":
+            file1.write("3\n")
+        elif m=="happines":
+            file1.write("4\n")
+        elif m=="sadness":
+            file1.write("5\n")
+        elif m=="neutral":
+            file1.write("6\n")
+    file1.close()
+    file1 = open(name, "r")
+    print("Output of Readlines after appending")
+    print (file1.readlines())
+    file1.close()
+    return
+def predict(audio):
+    prob=loaded_model.predict(audio)
+    return prob
+classes={
+  '1':'anger',
+  '2':'bordom',
+  '3':'fear',
+  '4':'happines',
+  '5':'sadness',
+  '6':'neutral'
+}
+test_audio_path='input/wav_tests'
+#DataFlair - Load the data and extract features for each sound file
+train_audio_path='input/train/'
+labels=os.listdir(train_audio_path)
+#Speach to text Model in Python
+warnings.filterwarnings("ignore")
 #DataFlair - Split the dataset
-x,y=load_data(test_size=0.2)
-data=train_test_split(np.array(x), y, test_size=0.2, random_state=109)
+x,y=load_data(test_size=0.1)
+data=train_test_split(np.array(x), y, test_size=0.1, random_state=109)
 x_train,x_test,y_train,y_test=data
 #Renad Khaled 1151356
 #DataFlair - Get the shape of the training and testing datasets
@@ -96,31 +113,25 @@ print(f'Features extracted: {x_train.shape[1]}')
 #DataFlair - Initialize the Multi Layer Perceptron Classifier
 print("______________________________________________________________________")
 print("\nUsing MLPClassifier")
-model=MLPClassifier(alpha=0.01, batch_size=256, epsilon=1e-05, hidden_layer_sizes=(300,), learning_rate='adaptive', max_iter=500)
+model=MLPClassifier(alpha=0.01, batch_size=256, epsilon=1e-05, hidden_layer_sizes=(300,200,50), learning_rate='adaptive', max_iter=500)
 #DataFlair - Train the model
 history= model.fit(x_train,y_train)
-
-# # summarize history for accuracy
-joblib.dump(history, "model.pkl")
+# save model and architecture to single file
+joblib.dump(history, "model.h5")
+print("Saved model to disk")
 #DataFlair - Predict for the test set
 y_pred=model.predict(x_test)
-
-# predicted =y_pred
-# expected = y_test
-# plt.figure(figsize=(4, 3))
-# plt.scatter(expected, predicted)
-# plt.plot([0, 100], [0, 100], '--k')
-# plt.axis('tight')
-# plt.xlabel('Train')
-# plt.ylabel('Predicted')
-# plt.title('MLPClassifier Prediction')
-# plt.tight_layout()
-# plt.show()
 #DataFlair - Calculate the accuracy of our model
 accuracy=accuracy_score(y_true=y_test, y_pred=y_pred)
 print(metrics.classification_report(y_test, y_pred))
 #DataFlair - Print the accuracy
 print("Accuracy: {:.2f}%".format(accuracy*100))
+#load the model to test the model again
+loaded_model = joblib.load('model.h5')
+x,y=load_data2(test_size=1)
+y_pred=predict(x)
+#save the prediction according to their number to a txt file
+CreateFile(y_pred)
 print("______________________________________________________________________")
 print("\nUsing GaussianNB")
 NB=GaussianNB()
